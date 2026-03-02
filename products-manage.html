@@ -75,7 +75,8 @@ button{
 }
 
 .add-product input,
-.add-product textarea{
+.add-product textarea,
+.add-product select{
   width:100%;
   padding:10px;
   margin-bottom:12px;
@@ -95,6 +96,14 @@ button{
   width:100%;
 }
 
+#typeFilter{
+  margin-bottom:20px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:none;
+  font-size:14px;
+}
+
 @media(max-width:900px){
   .container{grid-template-columns:1fr}
 }
@@ -108,6 +117,11 @@ button{
 
 <div class="products">
   <h2>All Products</h2>
+  
+  <select id="typeFilter">
+    <option value="all">Filter by Type (All)</option>
+  </select>
+
   <div id="productsList"></div>
 </div>
 
@@ -119,7 +133,7 @@ button{
   <input type="number" id="oldPrice" placeholder="Old Price">
   <input type="number" id="newPrice" placeholder="New Price">
   <input type="number" id="quantity" placeholder="Quantity">
-  <input type="text" id="type" placeholder="Product Type">
+  <input type="text" id="type" placeholder="Product Type (e.g., watch)">
 
   <label>Image 1</label>
   <input type="file" id="img1">
@@ -137,11 +151,9 @@ button{
 
 <script type="module">
 
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyDyZbGtqcZ0Pggwnk_wUAA_Sjn8XNIXtbI",
@@ -166,45 +178,63 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-
 /* 🔥 ضع هنا API KEY بتاع ImgBB */
 const IMGBB_API_KEY = "c976859feec5571cab43ec2bffbf015d";
 
-/* رفع صورة إلى ImgBB */
 async function uploadToImgBB(file){
   if(!file) return null;
-
   const formData = new FormData();
   formData.append("image", file);
-
   const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,{
     method:"POST",
     body:formData
   });
-
   const data = await res.json();
-  return data.data.url;
+  return data.data?.url || null;
 }
 
+let allProducts = [];
 
 async function loadProducts(){
   const snap = await getDocs(collection(db,"products"));
+  allProducts = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+  populateTypeFilter();
+  renderProducts();
+}
+
+function populateTypeFilter(){
+  const filter = document.getElementById("typeFilter");
+  const types = Array.from(new Set(allProducts.map(p=>p.type).filter(Boolean)));
+  
+  filter.innerHTML = `<option value="all">Filter by Type (All)</option>`;
+  types.forEach(t=>{
+    filter.innerHTML+=`<option value="${t}">${t}</option>`;
+  });
+}
+
+function renderProducts(){
   const container = document.getElementById("productsList");
   container.innerHTML="";
+  const selectedType = document.getElementById("typeFilter").value;
 
-  snap.forEach(d=>{
-    const data=d.data();
+  const filtered = allProducts.filter(p=>{
+    return selectedType==="all" || p.type===selectedType;
+  });
+
+  filtered.forEach(p=>{
     container.innerHTML+=`
       <div class="product">
-        <img src="${data.image1 || ''}">
+        <img src="${p.image1 || ''}">
         <div class="product-info">
-          <b>${data.name}</b><br>
-          Price: ${data.newPrice} EGP
+          <b>${p.name}</b><br>
+          Type: ${p.type || '-'}<br>
+          Price: ${p.newPrice || 0} EGP
         </div>
         <div class="product-actions">
-          <input type="number" value="${data.quantity}" id="qty-${d.id}">
-          <button class="save" onclick="updateQuantity('${d.id}')">Save</button>
-          <button class="delete" onclick="deleteProduct('${d.id}')">Delete</button>
+          <input type="number" value="${p.quantity}" id="qty-${p.id}">
+          <button class="save" onclick="updateQuantity('${p.id}')">Save</button>
+          <button class="delete" onclick="deleteProduct('${p.id}')">Delete</button>
         </div>
       </div>
     `;
@@ -213,10 +243,9 @@ async function loadProducts(){
 
 window.updateQuantity = async (id)=>{
   const newQty = document.getElementById(`qty-${id}`).value;
-  await updateDoc(doc(db,"products",id),{
-    quantity:Number(newQty)
-  });
+  await updateDoc(doc(db,"products",id),{ quantity:Number(newQty) });
   alert("Quantity Updated");
+  loadProducts();
 };
 
 window.deleteProduct = async (id)=>{
@@ -227,32 +256,16 @@ window.deleteProduct = async (id)=>{
 };
 
 window.addProduct = async ()=>{
-
-  const snap = await getDocs(collection(db,"products"));
-const count = snap.size;
-
-
   const name=document.getElementById("name").value.trim();
   if(!name) return alert("Enter product name");
-
   const cleanId=name.replace(/\s+/g,"_").toLowerCase();
 
   const description=document.getElementById("description").value;
   const oldPrice=document.getElementById("oldPrice").value;
   const newPrice=document.getElementById("newPrice").value;
   const quantity=document.getElementById("quantity").value;
-  const type = document.getElementById("type").value.trim();
+  const type=document.getElementById("type").value.trim();
 
-
-
-
-
-
-
-
-  
-
-  /* رفع الصور */
   const image1 = await uploadToImgBB(document.getElementById("img1").files[0]);
   const image2 = await uploadToImgBB(document.getElementById("img2").files[0]);
   const image3 = await uploadToImgBB(document.getElementById("img3").files[0]);
@@ -263,7 +276,7 @@ const count = snap.size;
     oldPrice:Number(oldPrice),
     newPrice:Number(newPrice),
     quantity:Number(quantity),
-     type,
+    type,
     image1:image1||"",
     image2:image2||"",
     image3:image3||"",
@@ -273,13 +286,11 @@ const count = snap.size;
   alert("Product Added Successfully 🔥");
 
   document.querySelectorAll(".add-product input, textarea").forEach(i=>i.value="");
-
+  loadProducts();
 };
 
-
-
+document.getElementById("typeFilter").addEventListener("change", renderProducts);
 
 </script>
-
 </body>
-</html>  
+</html>

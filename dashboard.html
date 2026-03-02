@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم Elkady Store</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:#f1f5f9;
+  display:flex;
+  min-height:100vh;
+  color:#1e293b;
+  direction:rtl;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:250px;
+  background:#0f172a;
+  color:white;
+  padding:30px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:25px;
+}
+.logo{font-size:20px;font-weight:800;text-align:center}
+.sidebar a{
+  text-decoration:none;
+  color:#cbd5e1;
+  padding:12px 15px;
+  border-radius:10px;
+  display:block;
+  transition:.3s;
+  font-size:14px;
+}
+.sidebar a:hover,.sidebar a.active{
+  background:#1e293b;
+  color:white;
+}
+
+/* MAIN */
+.main{flex:1;padding:30px}
+
+/* TOPBAR */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+  flex-wrap:wrap;
+  gap:15px;
+}
+
+.search-box input{
+  padding:10px 15px;
+  border-radius:10px;
+  border:1px solid #cbd5e1;
+  width:250px;
+}
+
+.filter{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.filter button{
+  padding:8px 15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+  background:#e2e8f0;
+}
+.filter button.active{
+  background:#6366f1;
+  color:white;
+}
+
+/* QUICK FILTER BUTTONS */
+.quick-filters{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+.quick-filters button{
+  padding:8px 15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+  color:white;
+}
+
+/* STATS */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px;
+  margin-bottom:20px;
+}
+.stat{
+  background:white;
+  padding:25px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.05);
+}
+.stat h3{font-size:24px;margin-bottom:5px}
+
+/* ORDERS */
+.orders{display:grid;gap:20px}
+
+.order-card{
+  background:white;
+  padding:25px;
+  border-radius:18px;
+  box-shadow:0 5px 20px rgba(0,0,0,.05);
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  transition:.3s;
+}
+.order-card:hover{transform:translateY(-3px)}
+
+.order-top{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.badge{
+  padding:5px 12px;
+  border-radius:50px;
+  font-size:12px;
+  font-weight:600;
+}
+.confirmed{background:#dcfce7;color:#166534}
+.cancelled{background:#fee2e2;color:#991b1b}
+.pending{background:#fef3c7;color:#92400e}
+
+.order-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+  font-size:14px;
+}
+
+.buttons{display:flex;gap:10px;flex-wrap:wrap}
+button{
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+}
+.accept{background:#22c55e;color:white}
+.cancel{background:#ef4444;color:white}
+.view{background:#3b82f6;color:white}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+.modal-box{
+  background:white;
+  width:100%;
+  max-width:600px;
+  padding:30px;
+  border-radius:20px;
+  max-height:90vh;
+  overflow:auto;
+}
+.modal img{
+  width:100%;
+  border-radius:15px;
+  margin-top:15px;
+  border:1px solid #e2e8f0;
+}
+.warning{
+  background:#fee2e2;
+  color:#991b1b;
+  padding:10px;
+  border-radius:10px;
+  margin-top:10px;
+  font-size:13px;
+}
+
+.product-img{
+  width:100%;
+  height:200px;
+  object-fit:contain;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  body{flex-direction:column}
+  .sidebar{width:100%;flex-direction:row;overflow:auto}
+  .main{padding:20px}
+  .search-box input{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">Elkady Store</div>
+  <a href="products-manage.html">المنتجات</a>
+</div>
+
+<div class="main">
+
+<div class="topbar">
+  <div class="search-box">
+    <input type="text" id="search" placeholder="ابحث بالاسم...">
+  </div>
+  <div class="filter">
+    <button onclick="setFilter('all', this)" class="active">الكل</button>
+    <button onclick="setFilter('confirmed', this)">موافق عليه</button>
+    <button onclick="setFilter('cancelled', this)">ملغى</button>
+    <button onclick="setFilter('pending', this)">تحت المراجعة</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><h3 id="total">0</h3><p>إجمالي الطلبات</p></div>
+  <div class="stat"><h3 id="confirmedCount">0</h3><p>موافق عليه</p></div>
+  <div class="stat"><h3 id="cancelledCount">0</h3><p>ملغى</p></div>
+  <div class="stat"><h3 id="revenue">0</h3><p>الإيرادات</p></div>
+</div>
+
+<div class="orders" id="orders"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-box" id="modalContent"></div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  updateDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDyZbGtqcZ0Pggwnk_wUAA_Sjn8XNIXtbI",
+  authDomain: "stock-side.firebaseapp.com",
+  projectId: "stock-side",
+  storageBucket: "stock-side.firebasestorage.app",
+  messagingSenderId: "650352784923",
+  appId: "1:650352784923:web:59e29f1567abb56925eabe",
+  measurementId: "G-7L6GF875ED"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let allOrders = [];
+let currentFilter = "all";
+
+// ======== تحميل الأوردرات ========
+async function loadOrders() {
+  const snap = await getDocs(collection(db,"orders"));
+  allOrders = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  renderOrders();
+}
+
+// ======== عرض الأوردرات ========
+async function renderOrders(){
+  const container = document.getElementById("orders");
+  container.innerHTML = "";
+
+  let total=0,confirmed=0,cancelled=0,revenue=0;
+  const searchValue=document.getElementById("search").value.toLowerCase();
+
+  const filtered = allOrders.filter(o=>{
+    const matchSearch = o.userName?.toLowerCase().includes(searchValue);
+
+    let matchFilter = currentFilter === "all" || o.status === currentFilter;
+
+
+    return matchSearch && matchFilter;
+  });
+
+  for(const data of filtered){
+    total++;
+    if(data.status==="confirmed"){confirmed++; revenue+=Number(data.totalPrice||0);}
+    if(data.status==="cancelled") cancelled++;
+
+    let productsHTML="";
+    if(Array.isArray(data.items) && data.items.length>0){
+      for(const item of data.items){
+        let image1="",productName=item.name||"منتج غير معروف";
+        if(item.productId){
+          const productSnap=await getDoc(doc(db,"products",item.productId));
+          if(productSnap.exists()){
+            image1=productSnap.data().image1||"";
+            productName=productSnap.data().name||productName;
+          }
+        }
+        productsHTML+=`
+        <div style="border-bottom:1px solid #e2e8f0;padding:10px 0;">
+          ${image1?`<img src="${image1}" class="product-img">`:""}
+          <div><b>اسم المنتج:</b> ${productName}</div>
+          <div><b>الكمية:</b> ${item.quantity||0}</div>
+          <div><b>السعر:</b> ${item.price||0} EGP</div>
+        </div>`;
+      }
+    }
+
+    container.innerHTML+=`
+    <div class="order-card">
+      <div class="order-top">
+        <strong>${data.userName}</strong>
+        <span class="badge ${data.status}">${data.status}</span>
+      </div>
+      <div class="order-grid">${productsHTML}
+        <div><b>المجموع الكلي:</b> ${data.totalPrice||0} EGP</div>
+        <div><b>الهاتف:</b> ${data.userPhone||"-"}</div>
+        <div><b>العنوان:</b> ${data.userAddress||"-"}</div>
+        <div><b>طريقة الدفع:</b> ${data.paymentMethod||"-"}</div>
+      </div>
+      <div class="buttons">
+        <button class="view" onclick="viewOrder('${data.id}')">عرض</button>
+        <div class="buttons">
+  <button class="accept" onclick="updateStatus('${data.id}','confirmed')">✔ تم</button>
+  <button style="background:#facc15;color:#92400e" onclick="updateStatus('${data.id}','pending')">⏳ مراجعة</button>
+  <button class="cancel" onclick="updateStatus('${data.id}','cancelled')">✖ ملغي</button>
+</div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById("total").innerText=total;
+  document.getElementById("confirmedCount").innerText=confirmed;
+  document.getElementById("cancelledCount").innerText=cancelled;
+  document.getElementById("revenue").innerText=revenue;
+}
+
+// ======== فلتر عادي ========
+window.setFilter=(status,el)=>{
+  currentFilter=status;
+  document.querySelectorAll(".filter button").forEach(b=>b.classList.remove("active"));
+  el.classList.add("active");
+  renderOrders();
+};
+
+
+// ======== تحديث حالة الأوردر ========
+window.updateStatus = async (id, newStatus) => {
+
+  const orderRef = doc(db, "orders", id);
+  const orderSnap = await getDoc(orderRef);
+  if (!orderSnap.exists()) return;
+
+  const orderData = orderSnap.data();
+  const oldStatus = orderData.status;
+
+  if (oldStatus === newStatus) return;
+
+  if (!Array.isArray(orderData.items)) {
+    alert("لا توجد منتجات داخل الطلب");
+    return;
+  }
+
+  // لف على كل منتج في الطلب
+  for (const item of orderData.items) {
+
+    const productRef = doc(db, "products", item.productId);
+    const productSnap = await getDoc(productRef);
+
+    if (!productSnap.exists()) continue;
+
+    let currentQuantity = Number(productSnap.data().quantity || 0);
+    const orderQuantity = Number(item.quantity || 0);
+
+    // لو اتلغى → رجع الكمية
+    if (oldStatus !== "cancelled" && newStatus === "cancelled") {
+      currentQuantity += orderQuantity;
+    }
+
+    // لو اتأكد → اخصم
+    if (oldStatus === "cancelled" && newStatus === "confirmed") {
+      if (currentQuantity < orderQuantity) {
+        alert("الكمية غير كافية للمنتج: " + productSnap.data().name);
+        return;
+      }
+      currentQuantity -= orderQuantity;
+    }
+
+    await updateDoc(productRef, { quantity: currentQuantity });
+  }
+
+  await updateDoc(orderRef, { 
+    status: newStatus,
+    wasApproved: newStatus === "confirmed"
+  });
+
+  loadOrders();
+};
+
+// ======== عرض تفاصيل الأوردر ========
+window.viewOrder=async(id)=>{
+  const snap=await getDoc(doc(db,"orders",id));
+  const data=snap.data();
+  document.getElementById("modalContent").innerHTML=`
+    <h3>تفاصيل الطلب</h3>
+    <p><b>الاسم:</b> ${data.userName}</p>
+    <p><b>الهاتف:</b> ${data.userPhone}</p>
+    <p><b>العنوان:</b> ${data.userAddress}</p>
+    <p><b>طريقة الدفع:</b> ${data.paymentMethod}</p>
+    <p><b>المحافظة:</b> ${data.province}</p>
+    <p><b>الإجمالي:</b> ${data.totalPrice} EGP</p>
+    ${data.transferImage?`<h4 style="margin-top:20px">صورة التحويل</h4><img src="${data.transferImage}">
+    <div class="warning">⚠️ تأكد أن صورة التحويل صحيحة قبل الموافقة.</div>`:`<p style="color:red;margin-top:15px">لا توجد صورة تحويل</p>`}
+    <button style="margin-top:20px" onclick="closeModal()">إغلاق</button>
+  `;
+  document.getElementById("modal").style.display="flex";
+};
+window.closeModal=()=>document.getElementById("modal").style.display="none";
+
+// ======== البحث ========
+document.getElementById("search").addEventListener("input",renderOrders);
+
+// ======== التحقق من تسجيل الدخول ========
+const auth=getAuth(app);
+onAuthStateChanged(auth,(user)=>{
+  if(!user){window.location.href="index.html"; return;}
+  if(user.email!=="modynasser164@gmail.com"){alert("غير مسموح لك بالدخول"); window.location.href="index.html"; return;}
+  loadOrders();
+});
+</script>
+</body>
+</html>

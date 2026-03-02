@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Products Management</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:#0f172a;
+  color:#e2e8f0;
+  padding:30px;
+}
+
+h1{margin-bottom:25px}
+
+.container{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:30px;
+}
+
+.products{
+  background:#1e293b;
+  padding:25px;
+  border-radius:20px;
+}
+
+.product{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px;
+  border-bottom:1px solid #334155;
+  gap:15px;
+}
+
+.product img{
+  width:60px;
+  height:60px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+.product-info{flex:1}
+
+.product-actions input{
+  width:70px;
+  padding:6px;
+  border-radius:6px;
+  border:none;
+}
+
+button{
+  padding:6px 12px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+}
+
+.save{background:#22c55e;color:black}
+.delete{background:#ef4444;color:white}
+
+.add-product{
+  background:#1e293b;
+  padding:25px;
+  border-radius:20px;
+}
+
+.add-product input,
+.add-product textarea{
+  width:100%;
+  padding:10px;
+  margin-bottom:12px;
+  border-radius:10px;
+  border:none;
+  font-size:14px;
+}
+
+.add-product textarea{
+  resize:none;
+  height:80px;
+}
+
+.upload-btn{
+  background:#3b82f6;
+  color:white;
+  width:100%;
+}
+
+@media(max-width:900px){
+  .container{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<h1>Products Management</h1>
+
+<div class="container">
+
+<div class="products">
+  <h2>All Products</h2>
+  <div id="productsList"></div>
+</div>
+
+<div class="add-product">
+  <h2>Add Product</h2>
+
+  <input type="text" id="name" placeholder="Product Name">
+  <textarea id="description" placeholder="Description"></textarea>
+  <input type="number" id="oldPrice" placeholder="Old Price">
+  <input type="number" id="newPrice" placeholder="New Price">
+  <input type="number" id="quantity" placeholder="Quantity">
+  <input type="text" id="type" placeholder="Product Type">
+
+  <label>Image 1</label>
+  <input type="file" id="img1">
+
+  <label>Image 2</label>
+  <input type="file" id="img2">
+
+  <label>Image 3</label>
+  <input type="file" id="img3">
+
+  <button class="upload-btn" onclick="addProduct()">Add Product</button>
+</div>
+
+</div>
+
+<script type="module">
+
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDyZbGtqcZ0Pggwnk_wUAA_Sjn8XNIXtbI",
+  authDomain: "stock-side.firebaseapp.com",
+  projectId: "stock-side",
+  storageBucket: "stock-side.firebasestorage.app",
+  messagingSenderId: "650352784923",
+  appId: "1:650352784923:web:59e29f1567abb56925eabe",
+  measurementId: "G-7L6GF875ED"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
+    console.log("Admin logged in:", user.email);
+    loadProducts();
+  }
+});
+
+
+/* 🔥 ضع هنا API KEY بتاع ImgBB */
+const IMGBB_API_KEY = "c976859feec5571cab43ec2bffbf015d";
+
+/* رفع صورة إلى ImgBB */
+async function uploadToImgBB(file){
+  if(!file) return null;
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,{
+    method:"POST",
+    body:formData
+  });
+
+  const data = await res.json();
+  return data.data.url;
+}
+
+
+async function loadProducts(){
+  const snap = await getDocs(collection(db,"products"));
+  const container = document.getElementById("productsList");
+  container.innerHTML="";
+
+  snap.forEach(d=>{
+    const data=d.data();
+    container.innerHTML+=`
+      <div class="product">
+        <img src="${data.image1 || ''}">
+        <div class="product-info">
+          <b>${data.name}</b><br>
+          Price: ${data.newPrice} EGP
+        </div>
+        <div class="product-actions">
+          <input type="number" value="${data.quantity}" id="qty-${d.id}">
+          <button class="save" onclick="updateQuantity('${d.id}')">Save</button>
+          <button class="delete" onclick="deleteProduct('${d.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+window.updateQuantity = async (id)=>{
+  const newQty = document.getElementById(`qty-${id}`).value;
+  await updateDoc(doc(db,"products",id),{
+    quantity:Number(newQty)
+  });
+  alert("Quantity Updated");
+};
+
+window.deleteProduct = async (id)=>{
+  if(confirm("Delete this product?")){
+    await deleteDoc(doc(db,"products",id));
+    loadProducts();
+  }
+};
+
+window.addProduct = async ()=>{
+
+  const snap = await getDocs(collection(db,"products"));
+const count = snap.size;
+
+
+  const name=document.getElementById("name").value.trim();
+  if(!name) return alert("Enter product name");
+
+  const cleanId=name.replace(/\s+/g,"_").toLowerCase();
+
+  const description=document.getElementById("description").value;
+  const oldPrice=document.getElementById("oldPrice").value;
+  const newPrice=document.getElementById("newPrice").value;
+  const quantity=document.getElementById("quantity").value;
+  const type = document.getElementById("type").value.trim();
+
+
+
+
+
+
+
+
+  
+
+  /* رفع الصور */
+  const image1 = await uploadToImgBB(document.getElementById("img1").files[0]);
+  const image2 = await uploadToImgBB(document.getElementById("img2").files[0]);
+  const image3 = await uploadToImgBB(document.getElementById("img3").files[0]);
+
+  await setDoc(doc(db,"products",cleanId),{
+    name,
+    description,
+    oldPrice:Number(oldPrice),
+    newPrice:Number(newPrice),
+    quantity:Number(quantity),
+     type,
+    image1:image1||"",
+    image2:image2||"",
+    image3:image3||"",
+    createdAt:new Date()
+  });
+
+  alert("Product Added Successfully 🔥");
+
+  document.querySelectorAll(".add-product input, textarea").forEach(i=>i.value="");
+
+};
+
+
+
+
+</script>
+
+</body>
+</html>  

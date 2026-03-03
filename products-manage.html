@@ -107,6 +107,24 @@ button{
 @media(max-width:900px){
   .container{grid-template-columns:1fr}
 }
+
+
+
+
+  p {
+    font-size: 18px;
+    margin: 5px 0;
+  }
+
+  span.key {
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  span.value {
+    font-style: italic;
+    color: #059669;
+  }
 </style>
 </head>
 <body>
@@ -134,6 +152,15 @@ button{
   <input type="number" id="newPrice" placeholder="New Price">
   <input type="number" id="quantity" placeholder="Quantity">
   <input type="text" id="type" placeholder="Product Type (e.g., watch)">
+  
+<p><span class="key">ساعة</span> = <span class="value">watch</span></p>
+<p><span class="key">شنطة</span> = <span class="value">bag</span></p>
+<p><span class="key">حزام</span> = <span class="value">belt</span></p>
+<p><span class="key">اكسسوار (خاتم، سلسلة)</span> = <span class="value">acc</span></p>
+<p><span class="key">كاب</span> = <span class="value">hat</span></p>
+<p><span class="key">محفظة</span> = <span class="value">wallet</span></p>
+<p><span class="key">نظارة</span> = <span class="value">glasses</span></p>
+
 
   <label>Image 1</label>
   <input type="file" id="img1">

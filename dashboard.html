@@ -289,11 +289,20 @@ const db = getFirestore(app);
 
 let allOrders = [];
 let currentFilter = "all";
+let allProductsMap = {};
 
 // ======== تحميل الأوردرات ========
 async function loadOrders() {
+   const productsSnap = await getDocs(collection(db,"products"));
+  allProductsMap = {};
+  productsSnap.forEach(docSnap=>{
+    allProductsMap[docSnap.id] = docSnap.data();
+  });
+
+  // تحميل الطلبات
   const snap = await getDocs(collection(db,"orders"));
   allOrders = snap.docs.map(d => ({id:d.id, ...d.data()}));
+
   renderOrders();
 }
 
@@ -324,11 +333,16 @@ async function renderOrders(){
       for(const item of data.items){
         let image1="",productName=item.name||"منتج غير معروف";
         if(item.productId){
-          const productSnap=await getDoc(doc(db,"products",item.productId));
-          if(productSnap.exists()){
-            image1=productSnap.data().image1||"";
-            productName=productSnap.data().name||productName;
-          }
+          const productData = allProductsMap[item.productId];
+
+
+if(productData){
+  image1 = productData.image1 || "";
+  productName = productData.name || productName;
+}
+
+
+          
         }
         productsHTML+=`
         <div style="border-bottom:1px solid #e2e8f0;padding:10px 0;">

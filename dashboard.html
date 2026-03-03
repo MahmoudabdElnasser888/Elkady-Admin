@@ -226,6 +226,10 @@ button{
 
 <div class="main">
 
+
+  <button id="logoutBtn" style="background:#ef4444;color:white;padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">تسجيل خروج</button>
+<div id="loginWarning" style="color:red;margin-top:10px;display:none;"></div>
+
 <div class="topbar">
   <div class="search-box">
     <input type="text" id="search" placeholder="ابحث بالاسم...">
@@ -449,7 +453,10 @@ document.getElementById("search").addEventListener("input",renderOrders);
 const auth = getAuth(app);
 
 onAuthStateChanged(auth, async (user) => {
+  const warningEl = document.getElementById("loginWarning");
+
   if (!user) {
+    // لو مش مسجل دخول نهائي
     window.location.href = "index.html";
     return;
   }
@@ -459,12 +466,28 @@ onAuthStateChanged(auth, async (user) => {
   const adminEmail = "accessorieseelkady@gmail.com";
 
   if (user.email?.toLowerCase().trim() !== adminEmail) {
-    alert("غير مسموح لك بالدخول");
-    window.location.href = "index.html";
+    // بدل alert + redirect
+    warningEl.innerText = "⚠️ غير مسموح لك بالدخول. يمكنك تسجيل خروج.";
+    warningEl.style.display = "block";
+    // إخفاء بقية لوحة التحكم
+    document.querySelector(".main").style.display = "none";
+    document.querySelector(".sidebar").style.display = "none";
     return;
   }
 
+  // لو الادمن
+  warningEl.style.display = "none";
+  document.querySelector(".main").style.display = "block";
+  document.querySelector(".sidebar").style.display = "flex";
+
   loadOrders();
+});
+
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await auth.signOut();
+  document.getElementById("loginWarning").style.display = "none";
+  window.location.href = "index.html";
 });
 </script>
 </body>

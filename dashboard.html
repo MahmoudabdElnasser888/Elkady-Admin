@@ -267,7 +267,12 @@ import {
   getDoc, 
   updateDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  getAuth, 
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDyZbGtqcZ0Pggwnk_wUAA_Sjn8XNIXtbI",
@@ -451,6 +456,9 @@ document.getElementById("search").addEventListener("input",renderOrders);
 
 // ======== التحقق من تسجيل الدخول ========
 const auth = getAuth(app);
+
+
+await setPersistence(auth, browserLocalPersistence);
 
 onAuthStateChanged(auth, async (user) => {
   const warningEl = document.getElementById("loginWarning");
